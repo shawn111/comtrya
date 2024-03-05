@@ -11,6 +11,10 @@ mod commands;
 mod config;
 use config::{load_config, Config};
 
+//use tracing_subscriber::prelude::*;
+#[cfg(target_os = "linux")]
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
 #[derive(Clone, Debug, structopt::StructOpt)]
 #[structopt(name = "comtrya")]
 pub(crate) struct GlobalArgs {
@@ -77,7 +81,27 @@ fn configure_subscriber(args: &GlobalArgs) -> impl Subscriber {
 fn main(args: GlobalArgs) -> anyhow::Result<()> {
     let subscriber = configure_subscriber(&args);
 
-    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+    #[cfg(target_os = "linux")]
+    {
+        match tracing_journald::layer() {
+            Ok(layer) => {
+                let fmt_layer = tracing_subscriber::fmt::layer().with_target(false);
+                let registry = tracing_subscriber::registry().with(fmt_layer).with(layer);
+                registry.init();
+            }
+            Err(e) => {
+                tracing::subscriber::set_global_default(subscriber)
+                    .expect("setting default subscriber failed");
+                error!("couldn't connect to journald: {}", e);
+            }
+        }
+    }
+
+    #[cfg(all(not(target_os = "linux")))]
+    {
+        tracing::subscriber::set_global_default(subscriber)
+            .expect("setting default subscriber failed");
+    }
 
     let config = match load_config(args.clone()) {
         Ok(config) => config,

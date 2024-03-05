@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - "main"
+      - "tracing_journald"
 
 env:
   MIN_SUPPORTED_RUST_VERSION: "1.70.0"
