@@ -230,7 +230,11 @@ impl ComtryaCommand for Apply {
                         continue;
                     }
 
+                    let action_summary = action.summarize();
                     for mut step in steps {
+                        if action_summary.is_none() {
+                            info!("{}", step.atom);
+                        }
                         if dry_run {
                             continue;
                         }
@@ -250,7 +254,9 @@ impl ComtryaCommand for Apply {
                             break;
                         }
                     }
-                    info!("{}", action.summarize());
+                    if !action_summary.is_none() {
+                        info!("{:?}", action_summary);
+                    }
                     span_action.exit();
                 }
 

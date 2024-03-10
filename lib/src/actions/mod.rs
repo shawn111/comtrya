@@ -27,7 +27,7 @@ use rhai::Engine;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
-use tracing::{error, warn};
+use tracing::error;
 use user::add::UserAdd;
 
 use self::user::add_group::UserAddGroup;
@@ -58,7 +58,7 @@ impl<T> Action for ConditionalVariantAction<T>
 where
     T: Action,
 {
-    fn summarize(&self) -> String {
+    fn summarize(&self) -> Option<String> {
         self.action.summarize()
     }
 
@@ -227,9 +227,8 @@ impl<E: std::error::Error> From<E> for ActionError {
 }
 
 pub trait Action {
-    fn summarize(&self) -> String {
-        warn!("need to define action summarize");
-        format!("not found action summarize")
+    fn summarize(&self) -> Option<String> {
+        None
     }
     fn plan(&self, manifest: &Manifest, context: &Contexts) -> anyhow::Result<Vec<Step>>;
 }
